@@ -11,7 +11,10 @@ Type safety MUST be enforced across the entire stack. React TypeScript component
 All FastAPI request/response models MUST use Pydantic v2+ for runtime validation. Field constraints MUST be strictly defined. Custom validators MUST be implemented for complex business logic. Data parsing MUST be explicit and never implicit.
 
 ### III. Test-First Development (NON-NEGOTIABLE)
-TDD MUST be followed: tests written first, user approval obtained, tests must fail, then implementation. React components MUST be tested with Vitest. FastAPI endpoints MUST be tested with pytest. Unit tests MUST cover business logic. Integration tests MUST verify inter-service contracts.
+React components MUST be tested with Vitest. FastAPI endpoints MUST be tested with pytest. Unit tests MUST cover business logic. Integration tests MUST verify inter-service contracts. TDD MUST be rigorously followed in a phased execution model:
+1. PHASE X (Testing): The agent MUST write all test cases first. These tests MUST explicitly fail.
+2. GATEWAY: The agent MUST halt all execution after Phase X and explicitly request user review and approval of the test cases. It MUST NOT proceed to implementation, even if the user requested a full end-to-end implementation in a single prompt.
+3. PHASE Y (Implementation): Only after explicit user approval is granted can the agent proceed to implement the feature code to make the tests pass.
 
 ### IV. Comprehensive Testing Standards
 Backend tests MUST achieve >90% coverage with pytest. Frontend tests MUST achieve >80% coverage with Vitest. All PRs MUST include test coverage reports. Integration tests MUST be written for any new API endpoints, shared schemas, or inter-service communication.
@@ -41,6 +44,9 @@ All tests MUST pass before merging. Type checking (TypeScript + mypy) MUST be pa
 
 ## Governance
 
-This Constitution supersedes all other development practices. Amendments require documentation, team approval, and migration plan. All changes MUST follow semantic versioning. Complexity MUST always be justified. Use architecture decision records (ADRs) for significant technical decisions. Changes to this constitution must not go side by side with any other feature implementation or documentation. Strict exceptions to coverage or TDD gates for pure documentation or configuration-only changes MUST be explicitly tagged with [BYPASS] in the tracking task.
+This Constitution supersedes all other development practices. Amendments require documentation, team approval, and migration plan. 
+All changes MUST follow semantic versioning. Complexity MUST always be justified. Use architecture decision records (ADRs) for significant technical decisions.
+Changes to this constitution must not go side by side with any other feature implementation or documentation changes.
+Strict exceptions to coverage or TDD gates for pure documentation or configuration-only changes MUST be explicitly tagged with [BYPASS] in the tracking task.
 
 **Version**: 1.0.0 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-09
