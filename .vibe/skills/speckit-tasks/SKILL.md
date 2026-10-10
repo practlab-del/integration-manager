@@ -1,6 +1,6 @@
 ---
 name: "speckit-tasks"
-description: "Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts."
+description: "Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts enforcing the Phase X/Y TDD layout and Constitution governance."
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
@@ -22,37 +22,9 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 **Check for extension hooks (before tasks generation)**:
 - Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.before_tasks` key
-- If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
-    ```
-    ## Extension Hooks
-
-    **Optional Pre-Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
-
-    Prompt: {prompt}
-    To execute: `/{command}`
-    ```
-  - **Mandatory hook** (`optional: false`):
-    ```
-    ## Extension Hooks
-
-    **Automatic Pre-Hook**: {extension}
-    Executing: `/{command}`
-    EXECUTE_COMMAND: {command}
-
-    Wait for the result of the hook command before proceeding to the Outline.
-    ```
-    After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+- If it exists, read it and look for entries under the `hooks.before_tasks` key.
+- Filter out disabled hooks and output standard execution/prompt layouts for matching hooks.
+- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently.
 
 ## Outline
 
@@ -61,7 +33,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 2. **Load design documents**: Read from FEATURE_DIR:
    - **Required**: plan.md (tech stack, libraries, structure), spec.md (user stories with priorities)
    - **Optional**: data-model.md (entities), contracts/ (interface contracts), research.md (decisions), quickstart.md (test scenarios)
-   - **IF EXISTS**: Load `.specify/memory/constitution.md` for project principles and governance constraints
+   - **REQUIRED**: Load `.specify/memory/constitution.md` for project principles and governance constraints
    - Note: Not all projects have all documents. Generate tasks based on what's available.
 
 3. **Execute task generation workflow**:
@@ -74,6 +46,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Generate dependency graph showing user story completion order
    - Create parallel execution examples per user story
    - Validate task completeness (each user story has all needed tasks, independently testable)
+   - Organize and group generated tasks sequentially by following the **Phased TDD Gatekeeper Protocol** below.
 
 4. **Generate tasks.md**: Use TASKS_TEMPLATE_CONTENT (from the JSON output above) as the structure. For compatibility with older setup scripts that omit TASKS_TEMPLATE_CONTENT, read TASKS_TEMPLATE instead. Fill with:
    - Correct feature name from plan.md
@@ -87,6 +60,27 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Dependencies section showing story completion order
    - Parallel execution examples per story
    - Implementation strategy section (MVP first, incremental delivery)
+
+   ### Strict Phased TDD Task Layout Rules
+   For each user story or technical block, tasks **MUST** be explicitly separated into two un-bundled blocks with an un-bypassable gate in between:
+
+   * **Phase X (Testing Block)**:
+     - Generate tasks to scaffold empty files, type templates, and initial failing test setups.
+     - Tasks **MUST** include writing Vitest suites for React components and pytest suites for FastAPI endpoints.
+     - Every Phase X task description **MUST** specify that the tests are expected to run and fail securely.
+
+   * **The Gateway Block**:
+     - You **MUST** insert a mandatory, dedicated review boundary checkpoint line directly in the tasks sequence:
+       ```markdown
+       - [ ] TASK-GATEWAY: Awaiting explicit user approval ("APPROVED") for Phase X test architecture review. Halt implementation.
+       ```
+
+   * **Phase Y (Implementation Block)**:
+     - Generate backend and frontend implementation tasks to satisfy the written tests.
+     - Include explicit tasks for type compliance checking (TypeScript + mypy), automated contract sync using `openapi-ts`, and linting/formatting verification via `ruff` and `ESLint`.
+
+   ### Governance & Bypass Rule
+   - **If the task or PR contains a `[BYPASS]` tag** (used exclusively for pure documentation updates or configuration-only changes), you are explicitly authorized to emit direct implementation tasks without generating a Phase X testing block or an accompanying Gateway boundary.
 
 ## Mandatory Post-Execution Hooks
 
